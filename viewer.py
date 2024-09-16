@@ -48,7 +48,8 @@ def get_data():
         question_text = ""
         question_images = []
         for q in question:
-            question_text+=(q['text'] + '\n')
+            if q['text'] is not None:
+                question_text+=(q['text'] + '\n')
             if q['image'] is not None:
                 img_path = os.path.join(json_file_directory, q['image'])
                 question_images.append(img_path)
@@ -57,7 +58,8 @@ def get_data():
         answer_text = ""
         answer_images = []
         for q in answer:
-            answer_text+=(q['text'] + '\n')
+            if q['text'] is not None:
+                answer_text+=(q['text'] + '\n')
             if q['image'] is not None:
                 answer_text+="\n---------------------- image ---------------------\n"
                 img_path = os.path.join(json_file_directory, q['image'])
@@ -67,7 +69,8 @@ def get_data():
         gt_answer_text = ""
         gt_answer_images = []
         for q in gt_answer[:min(3,len(gt_answer))]:
-            gt_answer_text+=(q['text'] + '\n')
+            if q['text'] is not None:
+                gt_answer_text+=(q['text'] + '\n')
             if q['image'] is not None:
                 gt_answer_text+="\n---------------------- image ---------------------\n"
                 img_path = os.path.join(json_file_directory, q['image'])
