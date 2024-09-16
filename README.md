@@ -11,7 +11,7 @@ pip install argparse
 ```bash
 cd Viewer
 git lfs install
-git clone https://hf-mirror.com/datasets/Lillianwei/ManytoMany_sample static
+git clone https://huggingface.co/datasets/Lillianwei/ManytoMany_sample static
 ```
 Be sure the name of the folder is renamed to `static`.
 
