@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viewer</title>
+    <style>
+        body {
+            margin-left: 100px;
+            margin-right: 300px;
+            font-size: 18px;
+            font-family: Arial, sans-serif;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        button {
+            font-size: 16px;
+            padding: 10px 20px;
+            margin: 10px;
+            background-color: rgb(0, 0, 0);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #8b8b8b;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .floating-panel {
+            position: fixed;
+            right: 20px;
+            top: 20px;
+            width: 200px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            z-index: 1000;
+        }
+
+        .floating-panel label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .floating-panel input[type="radio"],
+        .floating-panel input[type="checkbox"] {
+            margin-right: 5px;
+        }
+
+        .floating-panel button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .floating-panel button:hover {
+            background-color: #0056b3;
+        }
+
+        .inline-display {
+            display: flex;
+            align-items: center; /* 让两者垂直居中对齐 */
+        }
+
+        .inline-display h3 {
+            margin-right: 20px; /* 给两个元素之间增加一些间距 */
+        }
+    </style>
+    <script>
+        let boolValues = [false, false, false, false, false, false];
+        let selectedValue = 1;
+
+        function refresh(){
+            // 重置内部状态
+            boolValues = [false, false, false, false, false, false];
+            selectedValue = 1;
+
+            // 重置checkbox的选中状态
+            let checkboxes = document.querySelectorAll('.floating-panel input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+
+            // 重置radio的选中状态
+            let radios = document.querySelectorAll('.floating-panel input[type="radio"]');
+            radios.forEach(radio => {
+                if (radio.value == "1") {
+                    radio.checked = true;
+                } else {
+                    radio.checked = false;
+                }
+            });
+        }
+
+        function uploadJson() {
+            let fileInput = document.getElementById('jsonFile');
+            let file = fileInput.files[0];
+            let formData = new FormData();
+            formData.append('file', file);
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json()).then(data => {
+                console.log(data.message);
+            });
+        }
+
+        function navigate(direction) {
+            saveUserData();
+            fetch('/navigate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ direction: direction })
+            }).then(response => response.json()).then(data => {
+                console.log(data.message);
+                getData();
+            });
+            refresh();
+        }
+
+        function getData() {
+            fetch('/get_data').then(response => response.json()).then(data => {
+                document.getElementById('idDisplay').innerText = "ID: " + data.id;
+                document.getElementById('indexDisplay').innerText = "NO: " + data.index_info;
+
+                clearImageContainer('questionImagesDisplay');
+                clearImageContainer('answerImagesDisplay');
+                clearImageContainer('gtAnswerImagesDisplay');
+
+                document.getElementById('questionTextDisplay').innerText = data.question_text;
+                displayImages(data.question_images, 'questionImagesDisplay');
+
+                document.getElementById('answerTextDisplay').innerText = data.answer_text;
+                displayImages(data.answer_images, 'answerImagesDisplay');
+
+                document.getElementById('gtAnswerTextDisplay').innerText = data.gt_answer_text;
+                displayImages(data.gt_answer_images, 'gtAnswerImagesDisplay');
+            });
+        }
+
+        function displayImages(imageList, containerId) {
+            let container = document.getElementById(containerId);
+            imageList.forEach(function(imageSrc) {
+                let img = document.createElement('img');
+                img.src = imageSrc;
+                img.style.maxHeight = '200px';
+                img.style.margin = '10px';
+                container.appendChild(img);
+            });
+        }
+
+        function clearImageContainer(containerId) {
+            let container = document.getElementById(containerId);
+            container.innerHTML = '';
+        }
+
+        function saveUserData() {
+            let userData = {
+                criteria: boolValues,
+                score: selectedValue
+            };
+            fetch('/store_all', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_data: userData })
+            }).then(response => response.json()).then(data => {
+                console.log(data.message);
+            });
+        }
+
+        function toggleBool(index) {
+            boolValues[index] = !boolValues[index];
+        }
+
+        function setValue(value) {
+            selectedValue = value;
+        }
+    </script>
+</head>
+<body>
+    <h1>Viewer</h1>
+    <input type="file" id="jsonFile">
+    <button onclick="uploadJson()">Upload JSON</button>
+    <button onclick="navigate('start')">Start</button>
+
+    <!-- ID区 -->
+    <div class="inline-display">
+        <h3 id="idDisplay">ID: 123</h3>
+        <h3 id="indexDisplay">Index: 1</h3>
+    </div>
+
+    <!-- 问题区 -->
+    <div>
+        <h2>Question</h2>
+        <p id="questionTextDisplay"></p>
+        <div id="questionImagesDisplay"></div>
+    </div>
+
+    <!-- 答案区 -->
+    <div>
+        <h2>Answer</h2>
+        <p id="answerTextDisplay"></p>
+        <div id="answerImagesDisplay"></div>
+    </div>
+
+    <!-- Ground Truth 区 -->
+    <div>
+        <h2>Ground Truth Answer</h2>
+        <p id="gtAnswerTextDisplay"></p>
+        <div id="gtAnswerImagesDisplay"></div>
+    </div>
+
+    <!-- 浮动面板 -->
+    <div class="floating-panel">
+        
+        <div style="display: flex; flex-direction: column; align-items: flex-start;">
+            <h3>Criteria</h3>
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <input type="checkbox" onclick="toggleBool(0)" style="margin-right: 5px;">
+                <label>Text Quality</label>
+            </div>
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <input type="checkbox" onclick="toggleBool(1)" style="margin-right: 5px;">
+                <label>Image Quality</label>
+            </div>
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <input type="checkbox" onclick="toggleBool(2)" style="margin-right: 5px;">
+                <label>Text-Image Coherence</label>
+            </div>
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <input type="checkbox" onclick="toggleBool(3)" style="margin-right: 5px;">
+                <label>Method Quality and Practical Utility</label>
+            </div>
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <input type="checkbox" onclick="toggleBool(4)" style="margin-right: 5px;">
+                <label>Creativity and Engagement</label>
+            </div>
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <input type="checkbox" onclick="toggleBool(5)" style="margin-right: 5px;">
+                <label>Emotional Support</label>
+            </div>
+        </div>
+        
+        <h3 style="margin-right: 10px;">Score</h3>
+        <div style="display: flex; align-items: center;">
+            <label style="margin-right: 5px;">1</label><input type="radio" name="value" onclick="setValue(1)" checked >
+            <label style="margin-right: 5px; margin-left: 5px;">2</label><input type="radio" name="value" onclick="setValue(2)">
+            <label style="margin-right: 5px; margin-left: 5px;">3</label><input type="radio" name="value" onclick="setValue(3)">
+            <label style="margin-right: 5px; margin-left: 5px;">4</label><input type="radio" name="value" onclick="setValue(4)">
+            <label style="margin-left: 5px;">5</label><input type="radio" name="value" onclick="setValue(5)">
+        </div>
+        <br><br>
+        <button onclick="navigate('previous')">Previous</button>
+        <button onclick="navigate('next')">Next</button>
+        <button onclick="saveUserData()">Save</button>
+    </div>
+</body>
+</html>
