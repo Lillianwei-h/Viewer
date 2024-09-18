@@ -107,8 +107,9 @@ def store_data():
     global stored_data, json_data, current_index, total_num
     if 0 <= current_index < total_num:
         current_id = json_data[current_index]["id"]
+        model = json_data[current_index]["model"]
         user_data = request.json.get("user_data")
-        stored_data[current_id] = user_data
+        stored_data[f"{current_id}_{model}"] = user_data
         return jsonify({"message": "Data stored successfully", "status": "success"})
     return jsonify({"message": "Invalid index", "status": "error"})
 
